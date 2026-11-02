@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { loadSearchIndex } from "@/lib/search-index";
 import type { CardData, CategorySlug } from "@/lib/types";
-import { StoryCard } from "./StoryCard";
+import { StoryRow } from "./StoryCard";
 
 type Props = {
   /** Slugs already on the page. */
@@ -17,10 +17,9 @@ type Props = {
   /** Plain link used before JavaScript loads, and if it never does. */
   href: string;
   total: number;
-  sizes: string;
 };
 
-export function LoadMore({ shown, exclude = [], category, tag, batch, href, total, sizes }: Props) {
+export function LoadMore({ shown, exclude = [], category, tag, batch, href, total }: Props) {
   const [cards, setCards] = useState<CardData[]>([]);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
@@ -58,14 +57,14 @@ export function LoadMore({ shown, exclude = [], category, tag, batch, href, tota
     <>
       {cards.map((card, i) => (
         <div key={card.slug} ref={i === firstOfLastBatch ? firstNew : undefined} className="card--enter">
-          <StoryCard card={card} sizes={sizes} excerpt />
+          <StoryRow card={card} />
         </div>
       ))}
       <div className="stream__more">
         {remaining > 0 ? (
           <Link href={href} className="more-button" onClick={loadMore} aria-busy={busy} scroll={false}>
             <span>{busy ? "Loading…" : "Load more stories"}</span>
-            <span aria-hidden="true">+</span>
+            <span aria-hidden="true">{remaining}</span>
           </Link>
         ) : null}
         <p className="stream-live" role="status">

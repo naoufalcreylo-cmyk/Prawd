@@ -264,7 +264,7 @@ a:focus-visible > .u {
 
 .masthead__mark {
   display: block;
-  width: 100%;
+  width: clamp(200px, 36vw, 620px);
 }
 
 .masthead__mark svg {
@@ -282,6 +282,24 @@ a:focus-visible > .u {
 
 .masthead__line p:first-child {
   font-weight: 600;
+}
+
+/* Wordmark on the left, brand line on the right. */
+@media (min-width: 720px) {
+  .masthead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    padding-bottom: 14px;
+  }
+
+  .masthead__line {
+    flex-direction: column;
+    gap: 2px;
+    padding-block: 0;
+    text-align: right;
+  }
 }
 
 .nav-row {
@@ -1216,8 +1234,8 @@ a:focus-visible > .u {
 
 .footer__mark {
   display: block;
-  width: 100%;
-  margin-top: clamp(32px, 5vw, 72px);
+  width: clamp(140px, 20vw, 300px);
+  margin-top: clamp(28px, 3.5vw, 56px);
 }
 
 .footer__mark svg {

@@ -1,67 +1,144 @@
 import Image from "next/image";
 import Link from "next/link";
 import { NewsletterForm } from "@/components/Forms";
+import { PerspectivesModule } from "@/components/Formats";
 import { LoadMore } from "@/components/LoadMore";
-import { Headline, StoryCard } from "@/components/StoryCard";
-import { getArticles, getHomepage, toCard } from "@/lib/content";
-
-const STREAM_SIZES = "(min-width: 1040px) 37vw, (min-width: 720px) 50vw, 100vw";
+import { FormatMark, Headline, StoryCard, StoryRow } from "@/components/StoryCard";
+import { getArticles, getHomepage, getPlaces, getSections, getTags, tagSlug, toCard } from "@/lib/content";
 
 export default function HomePage() {
   const home = getHomepage();
+  const all = getArticles();
   const lead = toCard(home.lead);
   const focus = toCard(home.focus);
   const [voice, ...moreVoices] = home.voices.map(toCard);
-  const streamTotal = getArticles().length - home.leadSlugs.length;
+  const streamTotal = all.length - home.leadSlugs.length;
+  const chapters = getSections(home.matchday);
+  const places = getPlaces();
+  const topics = [...getTags().entries()]
+    .map(([slug, label]) => ({ slug, label, count: all.filter((a) => a.tags.includes(label)).length }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+    .slice(0, 8);
 
   return (
     <>
-      <section className="wrap lead" aria-label="Lead stories">
-        <div className="lead__grid">
-          <div className="lead__main">
+      <section className="wrap front" aria-label="Lead stories">
+        <div className="front__lead">
+          <StoryCard
+            card={lead}
+            ratio="r-wide"
+            headingClass="h-xl front__headline"
+            headingLevel="h2"
+            sizes="(min-width: 1040px) 50vw, 100vw"
+            priority
+            display
+            excerpt
+            className="card--lead"
+          />
+        </div>
+        <div className="front__index">
+          <h2 className="front__index-title">In this edition</h2>
+          <ol>
+            {home.edition.map((article, i) => {
+              const card = toCard(article);
+              return (
+                <li key={card.slug}>
+                  <span className="index-rail__no" aria-hidden="true">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <p className="label">{card.categoryLabel}</p>
+                    <Link href={`/articles/${card.slug}`} className="h-s front__index-link">
+                      <span className="u">{card.title}</span>
+                    </Link>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        <div className="front__side">
+          {home.supporting.map((article) => (
             <StoryCard
-              card={lead}
-              ratio="r-wide"
-              headingClass="h-xl"
+              key={article.slug}
+              card={toCard(article)}
+              ratio="r-land"
+              headingClass="h-s"
               headingLevel="h2"
-              sizes="(min-width: 1040px) 66vw, 100vw"
+              sizes="(min-width: 1040px) 25vw, (min-width: 720px) 50vw, 100vw"
               priority
-              display
-              excerpt
-              className="card--lead"
             />
+          ))}
+        </div>
+      </section>
+
+      <section className="wrap four-wrap" aria-label="More stories">
+        <div className="four">
+          {home.row.map((article) => (
+            <StoryCard
+              key={article.slug}
+              card={toCard(article)}
+              ratio="r-land"
+              sizes="(min-width: 1040px) 25vw, 50vw"
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="wrap section" aria-labelledby="matchday-title">
+        <div className="format-head">
+          <div>
+            <p className="label">
+              <FormatMark>The Matchday Edit</FormatMark>
+            </p>
+            <h2 id="matchday-title" className="h-l">
+              <Link href={`/articles/${home.matchday.slug}`}>
+                <span className="u">One matchday, five chapters.</span>
+              </Link>
+            </h2>
           </div>
-          <div className="lead__side">
-            {home.supporting.map((article) => (
-              <StoryCard
-                key={article.slug}
-                card={toCard(article)}
-                ratio="r-land"
-                headingClass="h-m"
-                headingLevel="h2"
-                sizes="(min-width: 1040px) 33vw, (min-width: 720px) 50vw, 100vw"
-                priority
-              />
+          <p className="excerpt">{home.matchday.excerpt}</p>
+        </div>
+        <div className="scroll-rail filmstrip-rail">
+          <ol className="filmstrip">
+            {chapters.map((chapter, i) => (
+              <li key={chapter.id}>
+                <Link href={`/articles/${home.matchday.slug}#${chapter.id}`} className="filmstrip__item">
+                  <span className="filmstrip__image">
+                    <Image
+                      src={chapter.image.src}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1040px) 30vw, 70vw"
+                      style={chapter.image.focal ? { objectPosition: chapter.image.focal } : undefined}
+                    />
+                  </span>
+                  <span className="index-rail__no">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="h-s filmstrip__label">
+                    <span className="u">{chapter.label}</span>
+                  </span>
+                  <span className="meta filmstrip__summary">{chapter.summary}</span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
       <section className="wrap section" aria-labelledby="latest-title">
-        <div className="latest">
-          <div className="latest__head">
-            <h2 id="latest-title" className="section-title">
-              Latest
-            </h2>
-            <p className="latest__note">New stories from around the game.</p>
-            <Link href="/latest" className="text-link">
-              All stories
-            </Link>
-          </div>
-          <div className="latest__stream">
-            <div className="stream">
+        <div className="latest2">
+          <div className="latest2__main">
+            <div className="section-head">
+              <h2 id="latest-title" className="section-title">
+                Latest
+              </h2>
+              <Link href="/latest" className="text-link">
+                All stories
+              </Link>
+            </div>
+            <div className="rows">
               {home.latest.map((article) => (
-                <StoryCard key={article.slug} card={toCard(article)} sizes={STREAM_SIZES} excerpt />
+                <StoryRow key={article.slug} card={toCard(article)} />
               ))}
               <LoadMore
                 shown={home.latest.map((a) => a.slug)}
@@ -69,11 +146,34 @@ export default function HomePage() {
                 batch={4}
                 total={streamTotal}
                 href="/latest"
-                sizes={STREAM_SIZES}
               />
             </div>
           </div>
+          <aside className="latest2__rail" aria-labelledby="topics-title">
+            <h2 id="topics-title" className="section-title section-title--rail">
+              Topics
+            </h2>
+            <ul>
+              {topics.map((topic) => (
+                <li key={topic.slug}>
+                  <Link href={`/tag/${tagSlug(topic.label)}`} className="topic-row">
+                    <span className="u">{topic.label}</span>
+                    <span className="meta">{topic.count}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </aside>
         </div>
+      </section>
+
+      <section className="wrap section" aria-labelledby="perspectives-title">
+        <PerspectivesModule
+          slug={home.perspectives.slug}
+          title={home.perspectives.title}
+          deck={home.perspectives.excerpt}
+          sections={getSections(home.perspectives)}
+        />
       </section>
 
       <section className="wrap section" aria-labelledby="selects-title">
@@ -200,6 +300,33 @@ export default function HomePage() {
             />
           ))}
         </div>
+      </section>
+
+      <section className="wrap section" aria-labelledby="atlas-title">
+        <div className="format-head">
+          <div>
+            <p className="label">
+              <FormatMark>PRAWD Atlas</FormatMark>
+            </p>
+            <h2 id="atlas-title" className="h-l">
+              <Link href="/atlas">
+                <span className="u">Football, by place.</span>
+              </Link>
+            </h2>
+          </div>
+          <p className="excerpt">
+            {places.length} places so far, each with at least one story behind it. Pick a city and start there.
+          </p>
+        </div>
+        <ul className="atlas-strip">
+          {places.map((place) => (
+            <li key={place.slug}>
+              <Link href={`/atlas/${place.slug}`}>
+                <span className="u">{place.city}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="wrap section" aria-labelledby="newsletter-title">

@@ -3,6 +3,7 @@ export type Searchable = {
   excerpt: string;
   categoryLabel: string;
   tags: string[];
+  places?: string[];
   author: string;
   text: string;
 };
@@ -28,7 +29,7 @@ export function searchEntries<T extends Searchable>(entries: T[], query: string)
     .map((entry) => {
       const title = normalise(entry.title);
       const excerpt = normalise(entry.excerpt);
-      const meta = normalise([entry.categoryLabel, entry.author, ...entry.tags].join(" "));
+      const meta = normalise([entry.categoryLabel, entry.author, ...entry.tags, ...(entry.places ?? [])].join(" "));
       const text = normalise(entry.text);
       let score = 0;
       for (const term of terms) {

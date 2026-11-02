@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CATEGORIES, SECONDARY_NAV, SITE } from "@/lib/site";
+import { CATEGORIES, FORMATS, SECONDARY_NAV, SITE } from "@/lib/site";
 import { Wordmark } from "./Wordmark";
 
 export function SiteFooter() {
@@ -20,6 +20,16 @@ export function SiteFooter() {
                 {CATEGORIES.map((category) => (
                   <li key={category.slug}>
                     <Link href={`/category/${category.slug}`}>{category.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <nav aria-label="PRAWD formats">
+              <h2>Formats</h2>
+              <ul>
+                {FORMATS.map((item) => (
+                  <li key={item.href}>
+                    <Link href={item.href}>{item.label}</Link>
                   </li>
                 ))}
               </ul>

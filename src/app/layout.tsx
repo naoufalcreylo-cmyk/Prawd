@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SITE } from "@/lib/site";
 import "./globals.css";
+import "./formats.css";
 
 const sans = Inter_Tight({ subsets: ["latin", "latin-ext"], variable: "--font-sans", display: "swap" });
 const serif = Newsreader({

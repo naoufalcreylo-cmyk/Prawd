@@ -31,8 +31,12 @@ export type CardData = {
   date: string;
   dateLabel: string;
   readingMinutes: number;
-  layout: "standard" | "photo";
+  layout: "standard" | "photo" | "matchday" | "perspectives";
+  format: string;
   image: { src: string; alt: string; focal?: string };
 };
 
-export type SearchEntry = CardData & { tags: string[]; author: string; text: string };
+export type SearchEntry = CardData & { tags: string[]; places: string[]; author: string; text: string };
+
+/** A chapter of a Matchday Edit, or an angle of a Perspectives story. */
+export type StorySection = { id: string; label: string; summary: string; image: MediaItem };

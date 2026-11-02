@@ -42,6 +42,16 @@ for (const file of fs.readdirSync(dir).filter((f) => f.endsWith(".mdx"))) {
   for (const match of content.matchAll(/ids=\{\[([^\]]+)\]\}/g)) {
     refs.push(...[...match[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]));
   }
+  // A first section may open on the story's own cover.
+  for (const section of data.sections ?? []) if (section.image !== data.cover) refs.push(section.image);
+  const markers = [...content.matchAll(/\{\/\* section: ([a-z0-9-]+) \*\/\}/g)].map((m) => m[1]);
+  const declared = (data.sections ?? []).map((section) => section.id);
+  if (markers.join() !== declared.join()) problems.push(`${file}: section markers [${markers}] don't match frontmatter [${declared}]`);
+  for (const [place, image] of Object.entries(data.placeImages ?? {})) {
+    if (!ids.has(image)) problems.push(`${file}: unknown place image "${image}"`);
+    if (!(data.places ?? []).includes(place)) problems.push(`${file}: placeImages lists "${place}", which isn't in places`);
+  }
+  for (const place of data.places ?? []) if (!/^[^,]+, [^,]+$/.test(place)) problems.push(`${file}: place "${place}" must be "City, Country"`);
   for (const ref of refs) {
     if (!ids.has(ref)) problems.push(`${file}: unknown image "${ref}"`);
     if (used.has(ref)) problems.push(`${file}: image "${ref}" is used more than once on the site`);

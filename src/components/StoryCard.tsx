@@ -2,6 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CardData } from "@/lib/types";
 
+const SIGNATURE_FORMATS = new Set(["Perspectives", "The Matchday Edit"]);
+
+/** The black square marks PRAWD's own formats everywhere they appear. */
+export function FormatMark({ children }: { children: React.ReactNode }) {
+  return <span className="fmt">{children}</span>;
+}
+
 export function Headline({ text, display }: { text: string; display?: string }) {
   const lines = (display ?? text).split("|");
   return (
@@ -62,6 +69,7 @@ export function StoryCard({
       <div className="card__body">
         <p className="label">
           <Link href={`/category/${card.categorySlug}`}>{card.categoryLabel}</Link>
+          {SIGNATURE_FORMATS.has(card.format) ? <FormatMark>{card.format}</FormatMark> : null}
         </p>
         <Heading className={headingClass}>
           <Link href={href}>
@@ -74,5 +82,19 @@ export function StoryCard({
         </p>
       </div>
     </article>
+  );
+}
+
+/** The dense list row used by Latest, archives and search. */
+export function StoryRow({ card, sizes = "(min-width: 720px) 28vw, 112px" }: { card: CardData; sizes?: string }) {
+  return (
+    <StoryCard
+      card={card}
+      className="story-row"
+      ratio="r-wide"
+      headingClass="h-m"
+      sizes={sizes}
+      excerpt
+    />
   );
 }

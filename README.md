@@ -35,15 +35,17 @@ Other commands: `npm test` (forms and search logic), `npm run lint`, `npm run co
 | `title`, `displayTitle` | `displayTitle` is optional. `\|` marks a line break in large headlines on wider screens. |
 | `excerpt`, `deck` | The excerpt appears on cards and search results. The deck appears under the headline. |
 | `category` | `football-culture`, `kits-boots`, `stories`, `interviews` or `photography` |
-| `format` | `Feature`, `Essay`, `Interview` or `Photo Essay` |
+| `format` | `Feature`, `Essay`, `Interview`, `Photo Essay`, `Perspectives` or `The Matchday Edit` |
 | `tags` | Each tag gets its own page at `/tag/...` |
 | `author` | An id from `content/authors.json` |
 | `published`, `modified` | Dates as `YYYY-MM-DD`. `modified` is optional. |
 | `cover`, `coverAlt`, `coverCaption` | `cover` is an id from `content/media.json`. The other two override its text. |
-| `layout` | `standard`, or `photo` for a picture-led feature that opens with a full-width image |
+| `layout` | `standard`, `photo` for a picture-led feature, `matchday` or `perspectives` |
 | `status` | `draft` or `published` |
 | `demo`, `demoNote` | `demo: true` shows a preview notice and keeps the article out of search engines |
-| `homepage`, `homepageOrder` | `lead`, `supporting`, `selects`, `in-focus` or `none` |
+| `homepage`, `homepageOrder` | `lead`, `supporting`, `row`, `selects`, `in-focus` or `none` |
+| `places`, `placeImages` | Build the Atlas. Each place is `City, Country`. A story with several places names the photograph taken in each one |
+| `sections` | The angles of a Perspectives story or chapters of a Matchday Edit |
 | `featured` | Featured stories fill any empty lead, supporting, In Focus or Selects slot before newer stories do |
 | `seo.title`, `seo.description` | Optional replacements for the title and description in search results and social previews |
 
@@ -59,13 +61,26 @@ Write Markdown, plus four components:
 <Q>A question in an interview.</Q>
 ```
 
-The homepage arranges itself from the frontmatter, and no story appears twice in the initial layout:
+The homepage arranges itself from the frontmatter. Only the text list "In this edition" repeats stories placed further down:
 
 - **Lead stories:** one `lead` and two `supporting`.
+- **Four-up row:** four stories with `row`.
+- **The Matchday Edit and PRAWD Perspectives:** the newest story with that `layout`.
 - **Latest:** the newest four stories not placed elsewhere. "Load more" then adds the rest.
 - **PRAWD Selects:** three stories with `selects`.
 - **In Focus:** one story with `in-focus`. Use a wide photograph, as it's cropped to a panorama.
 - **Kits & Boots and Voices:** the newest unplaced stories from `kits-boots` and `interviews`.
+
+## PRAWD formats
+
+- **PRAWD Atlas** (`/atlas`) builds itself from each article's `places`. A place appears once a published story covers it. Only name a place the story is really about, and never pair a place with a photograph taken somewhere else.
+- **The Matchday Edit** (`layout: matchday`) and **PRAWD Perspectives** (`layout: perspectives`) list their chapters or angles under `sections`, each with an `id`, `label`, `summary` and `image`. The body then has one marker per section, in the same order. See `content/articles/the-matchday-edit.mdx`:
+
+```mdx
+{/* section: the-journey */}
+
+The text of this chapter.
+```
 
 ## Add an image
 
@@ -123,9 +138,11 @@ CC BY-SA images can be used commercially, but they need attribution and share-al
 content/articles/    one MDX file per article
 content/media.json   every image, with alt text, credit and focal point
 content/authors.json bylines
+content/image-sources.json  original file, author and licence of each image
 src/lib/content.ts   reads and validates content, builds the homepage
 src/lib/forms.ts     form validation and provider calls
 src/app/             routes
 src/components/      header, cards, article parts, forms
-src/app/globals.css  the entire design system
+src/app/globals.css  the core design system
+src/app/formats.css  front page, rows and PRAWD formats
 ```

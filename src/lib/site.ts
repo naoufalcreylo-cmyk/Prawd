@@ -43,6 +43,14 @@ export const CATEGORIES: { slug: CategorySlug; label: string; description: strin
 export const NAV = [
   { href: "/latest", label: "Latest" },
   ...CATEGORIES.map((c) => ({ href: `/category/${c.slug}`, label: c.label })),
+  { href: "/atlas", label: "Atlas" },
+];
+
+/** PRAWD's own formats. Each link goes to a page that exists today. */
+export const FORMATS = [
+  { href: "/atlas", label: "PRAWD Atlas" },
+  { href: "/articles/the-matchday-edit", label: "The Matchday Edit" },
+  { href: "/articles/a-wallpaper-pattern-walks-onto-the-pitch", label: "PRAWD Perspectives" },
 ];
 
 export const SECONDARY_NAV = [

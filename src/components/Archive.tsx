@@ -1,12 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { toCard, type Article } from "@/lib/content";
 import { CATEGORIES, PAGE_SIZE } from "@/lib/site";
 import type { CategorySlug } from "@/lib/types";
-import { Headline, StoryCard } from "./StoryCard";
+import { StoryCard, StoryRow } from "./StoryCard";
 import { LoadMore } from "./LoadMore";
-
-const GRID_SIZES = "(min-width: 1040px) 33vw, (min-width: 720px) 50vw, 100vw";
 
 export function Archive({
   title,
@@ -28,21 +25,28 @@ export function Archive({
   tag?: string;
 }) {
   const start = (page - 1) * PAGE_SIZE;
-  const items = articles.slice(start, start + PAGE_SIZE);
+  const items = articles.slice(start, start + PAGE_SIZE).map(toCard);
   const totalPages = Math.max(1, Math.ceil(articles.length / PAGE_SIZE));
-  const [first, ...rest] = items;
-  const hasLead = page === 1 && first;
-  const gridItems = hasLead ? rest : items;
   const hrefFor = (n: number) => (n === 1 ? basePath : `${basePath}/page/${n}`);
+
+  // Page one opens like a front page. Later pages are a plain list.
+  const first = page === 1 ? items[0] : undefined;
+  const pair = page === 1 ? items.slice(1, 3) : [];
+  const rows = page === 1 ? items.slice(3) : items;
 
   return (
     <div className="wrap">
-      <header className="page-head">
+      <header className="page-head page-head--split">
         <h1 className="h-mega">{page > 1 ? `${title}, page ${page}` : title}</h1>
-        <p className="deck">{description}</p>
+        <div>
+          <p className="deck">{description}</p>
+          <p className="meta page-head__count">
+            {articles.length} {articles.length === 1 ? "story" : "stories"}
+          </p>
+        </div>
       </header>
 
-      <nav aria-label="Filter by section">
+      <nav aria-label="Filter by section" className="scroll-rail">
         <ul className="filters">
           <li>
             <Link href="/latest" aria-current={current === "/latest" ? "page" : undefined}>
@@ -62,31 +66,39 @@ export function Archive({
         </ul>
       </nav>
 
-      {hasLead ? (
-        <article className="card archive-lead">
-          <Link href={`/articles/${first.slug}`} className="media r-wide" tabIndex={-1} aria-hidden="true">
-            <ArchiveImage article={first} />
-          </Link>
-          <div className="card__body">
-            <p className="label">
-              <Link href={`/category/${toCard(first).categorySlug}`}>{toCard(first).categoryLabel}</Link>
-            </p>
-            <h2 className="h-l">
-              <Link href={`/articles/${first.slug}`}>
-                <Headline text={first.title} />
-              </Link>
-            </h2>
-            <p className="excerpt">{first.excerpt}</p>
-            <p className="meta">
-              <time dateTime={first.published}>{toCard(first).dateLabel}</time>
-            </p>
+      {first ? (
+        <div className="archive-front">
+          <div className="archive-front__lead">
+            <StoryCard
+              card={first}
+              ratio="r-wide"
+              headingClass="h-l"
+              headingLevel="h2"
+              sizes="(min-width: 1040px) 58vw, 100vw"
+              priority
+              excerpt
+            />
           </div>
-        </article>
+          {pair.length > 0 ? (
+            <div className="archive-front__side">
+              {pair.map((card) => (
+                <StoryCard
+                  key={card.slug}
+                  card={card}
+                  ratio="r-land"
+                  headingClass="h-s"
+                  headingLevel="h2"
+                  sizes="(min-width: 1040px) 40vw, (min-width: 720px) 50vw, 100vw"
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
-      <div className="archive-grid">
-        {gridItems.map((article) => (
-          <StoryCard key={article.slug} card={toCard(article)} sizes={GRID_SIZES} excerpt />
+      <div className="rows">
+        {rows.map((card) => (
+          <StoryRow key={card.slug} card={card} />
         ))}
         {page < totalPages && page === 1 ? (
           <LoadMore
@@ -96,7 +108,6 @@ export function Archive({
             batch={PAGE_SIZE}
             total={articles.length}
             href={hrefFor(page + 1)}
-            sizes={GRID_SIZES}
           />
         ) : null}
         {page > 1 ? (
@@ -107,18 +118,5 @@ export function Archive({
         ) : null}
       </div>
     </div>
-  );
-}
-
-function ArchiveImage({ article }: { article: Article }) {
-  return (
-    <Image
-      src={article.image.src}
-      alt=""
-      fill
-      priority
-      sizes="(min-width: 720px) 66vw, 100vw"
-      style={article.image.focal ? { objectPosition: article.image.focal } : undefined}
-    />
   );
 }

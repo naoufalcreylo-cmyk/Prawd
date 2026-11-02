@@ -35,6 +35,12 @@ export default function AboutPage() {
             next season, and we give photographs the room they need. Every photograph is credited, and our{" "}
             <Link href="/credits">image credits</Link> list the source and licence of each one.
           </p>
+          <h2>Our own formats</h2>
+          <p>
+            The <Link href="/atlas">PRAWD Atlas</Link> connects stories by place. <Link href="/articles/the-matchday-edit">The
+            Matchday Edit</Link> follows a matchday in five chapters. <Link href="/articles/a-wallpaper-pattern-walks-onto-the-pitch">PRAWD
+            Perspectives</Link> looks at one subject from several angles.
+          </p>
           <h2>This is a preview edition</h2>
           <p>
             The articles currently on this site are demonstration content, written to show how PRAWD will read and look.

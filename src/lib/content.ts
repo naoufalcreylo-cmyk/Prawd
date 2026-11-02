@@ -4,7 +4,7 @@ import { cache } from "react";
 import matter from "gray-matter";
 import { z } from "zod";
 import { CATEGORIES, categoryLabel } from "./site";
-import type { CardData, CategorySlug, MediaItem, SearchEntry } from "./types";
+import type { CardData, CategorySlug, MediaItem, SearchEntry, StorySection } from "./types";
 
 const ROOT = path.join(process.cwd(), "content");
 const CATEGORY_SLUGS = CATEGORIES.map((c) => c.slug) as [CategorySlug, ...CategorySlug[]];
@@ -18,7 +18,13 @@ export const frontmatterSchema = z.object({
   excerpt: z.string().min(1),
   deck: z.string().optional(),
   category: z.enum(CATEGORY_SLUGS),
-  format: z.enum(["Feature", "Essay", "Interview", "Photo Essay"]).default("Feature"),
+  format: z.enum(["Feature", "Essay", "Interview", "Photo Essay", "Perspectives", "The Matchday Edit"]).default("Feature"),
+  /** "City, Country" for each place the story is genuinely about. These build the Atlas. */
+  places: z.array(z.string().regex(/^[^,]+, [^,]+$/)).default([]),
+  /** For stories about several places: the photograph actually taken in each one. */
+  placeImages: z.record(z.string(), z.string()).default({}),
+  /** The angles of a Perspectives story, or the chapters of a Matchday Edit. */
+  sections: z.array(z.object({ id: z.string(), label: z.string(), summary: z.string(), image: z.string() })).default([]),
   tags: z.array(z.string()).default([]),
   author: z.string(),
   published: isoDate,
@@ -26,13 +32,13 @@ export const frontmatterSchema = z.object({
   cover: z.string(),
   coverAlt: z.string().optional(),
   coverCaption: z.string().optional(),
-  layout: z.enum(["standard", "photo"]).default("standard"),
+  layout: z.enum(["standard", "photo", "matchday", "perspectives"]).default("standard"),
   status: z.enum(["draft", "published"]).default("draft"),
   /** Demo content stays out of search engines even after indexing is switched on. */
   demo: z.boolean().default(false),
   demoNote: z.string().optional(),
   featured: z.boolean().default(false),
-  homepage: z.enum(["lead", "supporting", "selects", "in-focus", "none"]).default("none"),
+  homepage: z.enum(["lead", "supporting", "row", "selects", "in-focus", "none"]).default("none"),
   homepageOrder: z.number().default(0),
   seo: z.object({ title: z.string().optional(), description: z.string().optional() }).default({}),
 });
@@ -57,6 +63,7 @@ const getAuthors = cache((): Record<string, { name: string; bio: string }> =>
 
 export function plainText(body: string) {
   return body
+    .replace(/\{\/\*.*?\*\/\}/g, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/[#*_`>|]/g, "")
     .replace(/\s+/g, " ")
@@ -134,12 +141,13 @@ export function toCard(a: Article): CardData {
     dateLabel: formatDate(a.published),
     readingMinutes: a.readingMinutes,
     layout: a.layout,
+    format: a.format,
     image: { src: a.image.src, alt: a.image.alt, focal: a.image.focal },
   };
 }
 
 export function toSearchEntry(a: Article): SearchEntry {
-  return { ...toCard(a), tags: a.tags, author: a.authorName, text: plainText(a.body).slice(0, 12000) };
+  return { ...toCard(a), tags: a.tags, places: a.places, author: a.authorName, text: plainText(a.body).slice(0, 12000) };
 }
 
 export function getRelated(article: Article, count = 3) {
@@ -154,6 +162,46 @@ export function getRelated(article: Article, count = 3) {
     .map((x) => x.a);
 }
 
+export function getSections(article: Article): StorySection[] {
+  const media = getMedia();
+  return article.sections.map((section) => {
+    const image = media[section.image];
+    if (!image) throw new Error(`${article.slug}: unknown image "${section.image}"`);
+    return { ...section, image };
+  });
+}
+
+export function placeSlug(city: string) {
+  return city
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/ł/g, "l")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export type Place = { slug: string; city: string; country: string; articles: Article[]; image: MediaItem | null };
+
+/** The Atlas is built from the archive, so a place appears only once a story covers it. */
+export function getPlaces(): Place[] {
+  const places = new Map<string, Place>();
+  for (const article of getArticles()) {
+    for (const label of article.places) {
+      const [city, country] = label.split(", ");
+      const slug = placeSlug(city);
+      const place: Place = places.get(slug) ?? { slug, city, country, articles: [], image: null };
+      place.articles.push(article);
+      // Never show a photograph from somewhere else. A cover only stands in when the story has one place.
+      const mapped = article.placeImages[label];
+      const candidate = mapped ? getMedia()[mapped] : article.places.length === 1 ? article.image : undefined;
+      if (!place.image && candidate) place.image = candidate;
+      places.set(slug, place);
+    }
+  }
+  return [...places.values()].sort((a, b) => a.city.localeCompare(b.city, "en"));
+}
+
 export function tagSlug(tag: string) {
   return tag.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -164,7 +212,7 @@ export function getTags() {
   return tags;
 }
 
-/** Assembles the homepage from frontmatter, with no story placed twice. */
+/** Assembles the homepage from frontmatter. Only "In this edition", a text index, repeats a story. */
 export function getHomepage() {
   const all = getArticles();
   const slot = (name: Article["homepage"]) =>
@@ -181,12 +229,19 @@ export function getHomepage() {
   const fallback = [...all.filter((a) => a.featured), ...all];
   const lead = take(slot("lead").concat(fallback), 1)[0];
   const supporting = take(slot("supporting").concat(fallback), 2);
+  const leadSlugs = [lead, ...supporting].map((a) => a.slug);
+  const matchday = take(all.filter((a) => a.layout === "matchday"), 1)[0];
+  const perspectives = take(all.filter((a) => a.layout === "perspectives"), 1)[0];
+  const row = take(slot("row"), 4);
   const focus = take(slot("in-focus").concat(fallback), 1)[0];
   const selects = take(slot("selects").concat(fallback), 3);
+  const kitsPool = all.filter((a) => a.category === "kits-boots");
+  const voicesPool = all.filter((a) => a.category === "interviews");
+  // Reserve the two themed modules before Latest takes the newest of what's left.
+  const kits = take(kitsPool, 3);
+  const voices = take(voicesPool.slice(-2), 2);
   const latest = take(all, 4);
-  const kits = take(all.filter((a) => a.category === "kits-boots"), 3);
-  const voices = take(all.filter((a) => a.category === "interviews"), 2);
-  const leadSlugs = [lead, ...supporting].map((a) => a.slug);
+  const edition = all.filter((a) => !leadSlugs.includes(a.slug)).slice(0, 5);
 
-  return { lead, supporting, leadSlugs, focus, selects, kits, voices, latest };
+  return { lead, supporting, leadSlugs, matchday, perspectives, row, focus, selects, kits, voices, latest, edition };
 }

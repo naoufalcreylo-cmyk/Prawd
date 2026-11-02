@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { searchEntries } from "@/lib/search";
 import { loadSearchIndex } from "@/lib/search-index";
-import { CATEGORIES, NAV, SECONDARY_NAV, SITE } from "@/lib/site";
+import { CATEGORIES, FORMATS, NAV, SECONDARY_NAV, SITE } from "@/lib/site";
 import type { SearchEntry } from "@/lib/types";
 import { Wordmark } from "./Wordmark";
 
@@ -138,7 +138,9 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   const results = index && trimmed ? searchEntries(index, trimmed) : [];
 
   let status = "";
-  if (trimmed && index) {
+  if (trimmed && !index && !failed) {
+    status = "Searching…";
+  } else if (trimmed && index) {
     status = results.length
       ? `${results.length} ${results.length === 1 ? "story" : "stories"} found`
       : `Nothing found for “${trimmed}”. Try a broader word, like “boots” or “supporters”.`;
@@ -194,6 +196,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
                 <span>
                   <span className="label" style={{ display: "block" }}>
                     {entry.categoryLabel}
+                    {entry.places[0] ? <span className="meta"> · {entry.places[0].split(", ")[0]}</span> : null}
                   </span>
                   <span className="h-s" style={{ display: "block" }}>
                     <span className="u">{entry.title}</span>
@@ -210,6 +213,13 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
               <li key={category.slug}>
                 <Link href={`/category/${category.slug}`} onClick={onClose}>
                   {category.label}
+                </Link>
+              </li>
+            ))}
+            {FORMATS.map((item) => (
+              <li key={item.href}>
+                <Link href={item.href} onClick={onClose} className="fmt">
+                  {item.label}
                 </Link>
               </li>
             ))}
@@ -252,6 +262,9 @@ export function SiteHeader() {
                 <Wordmark decorative />
               </Link>
             </h1>
+            <div className="masthead__tools">
+              <Tools onMenu={() => setPanel("menu")} onSearch={() => setPanel("search")} />
+            </div>
             <div className="masthead__line">
               <p>{SITE.line}</p>
               <p className="meta">Preview edition. Sample content.</p>
@@ -293,6 +306,18 @@ export function SiteHeader() {
               </li>
             ))}
           </ul>
+          <div className="menu-formats">
+            <h2>PRAWD formats</h2>
+            <ul>
+              {FORMATS.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} onClick={close} className="fmt">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
           <ul className="menu-secondary">
             {SECONDARY_NAV.map((item) => (
               <li key={item.href}>
