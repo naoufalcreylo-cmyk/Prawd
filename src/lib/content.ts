@@ -212,7 +212,7 @@ export function getTags() {
   return tags;
 }
 
-/** Assembles the homepage from frontmatter. Only "In this edition", a text index, repeats a story. */
+/** Assembles the homepage from frontmatter. Only the Editors' Picks tab repeats a story. */
 export function getHomepage() {
   const all = getArticles();
   const slot = (name: Article["homepage"]) =>
@@ -228,7 +228,7 @@ export function getHomepage() {
   // Empty slots fill with featured stories first, then with the newest.
   const fallback = [...all.filter((a) => a.featured), ...all];
   const lead = take(slot("lead").concat(fallback), 1)[0];
-  const supporting = take(slot("supporting").concat(fallback), 2);
+  const supporting = take(slot("supporting").concat(fallback), 1);
   const leadSlugs = [lead, ...supporting].map((a) => a.slug);
   const matchday = take(all.filter((a) => a.layout === "matchday"), 1)[0];
   const perspectives = take(all.filter((a) => a.layout === "perspectives"), 1)[0];
@@ -240,8 +240,8 @@ export function getHomepage() {
   // Reserve the two themed modules before Latest takes the newest of what's left.
   const kits = take(kitsPool, 3);
   const voices = take(voicesPool.slice(-2), 2);
-  const latest = take(all, 4);
-  const edition = all.filter((a) => !leadSlugs.includes(a.slug)).slice(0, 5);
+  const latest = take(all, 5);
+  const picks = all.filter((a) => a.featured && !leadSlugs.includes(a.slug));
 
-  return { lead, supporting, leadSlugs, matchday, perspectives, row, focus, selects, kits, voices, latest, edition };
+  return { lead, supporting, leadSlugs, matchday, perspectives, row, focus, selects, kits, voices, latest, picks };
 }

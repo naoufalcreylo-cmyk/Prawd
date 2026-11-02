@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { NewsletterForm } from "@/components/Forms";
-import { PerspectivesModule } from "@/components/Formats";
+import { PerspectivesModule, StreamTabs } from "@/components/Formats";
 import { LoadMore } from "@/components/LoadMore";
+import { PlacesRail, TopicsRail } from "@/components/Rails";
 import { FormatMark, Headline, StoryCard, StoryRow } from "@/components/StoryCard";
-import { getArticles, getHomepage, getPlaces, getSections, getTags, tagSlug, toCard } from "@/lib/content";
+import { getArticles, getHomepage, getPlaces, getSections, toCard } from "@/lib/content";
 
 export default function HomePage() {
   const home = getHomepage();
@@ -15,61 +16,33 @@ export default function HomePage() {
   const streamTotal = all.length - home.leadSlugs.length;
   const chapters = getSections(home.matchday);
   const places = getPlaces();
-  const topics = [...getTags().entries()]
-    .map(([slug, label]) => ({ slug, label, count: all.filter((a) => a.tags.includes(label)).length }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
-    .slice(0, 8);
 
   return (
     <>
-      <section className="wrap front" aria-label="Lead stories">
-        <div className="front__lead">
+      <section className="wrap hero" aria-label="Lead stories">
+        <StoryCard
+          card={lead}
+          ratio="r-wide"
+          headingClass="h-l"
+          headingLevel="h2"
+          sizes="(min-width: 1040px) 50vw, 100vw"
+          priority
+          excerpt
+          className="hero-main"
+        />
+        {home.supporting.map((article) => (
           <StoryCard
-            card={lead}
-            ratio="r-wide"
-            headingClass="h-xl front__headline"
+            key={article.slug}
+            card={toCard(article)}
+            ratio="r-land"
+            headingClass="h-s"
             headingLevel="h2"
-            sizes="(min-width: 1040px) 50vw, 100vw"
+            sizes="(min-width: 1040px) 25vw, 100vw"
             priority
-            display
             excerpt
-            className="card--lead"
+            className="hero__side"
           />
-        </div>
-        <div className="front__index">
-          <h2 className="front__index-title">In this edition</h2>
-          <ol>
-            {home.edition.map((article, i) => {
-              const card = toCard(article);
-              return (
-                <li key={card.slug}>
-                  <span className="index-rail__no" aria-hidden="true">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <p className="label">{card.categoryLabel}</p>
-                    <Link href={`/articles/${card.slug}`} className="h-s front__index-link">
-                      <span className="u">{card.title}</span>
-                    </Link>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-        <div className="front__side">
-          {home.supporting.map((article) => (
-            <StoryCard
-              key={article.slug}
-              card={toCard(article)}
-              ratio="r-land"
-              headingClass="h-s"
-              headingLevel="h2"
-              sizes="(min-width: 1040px) 25vw, (min-width: 720px) 50vw, 100vw"
-              priority
-            />
-          ))}
-        </div>
+        ))}
       </section>
 
       <section className="wrap four-wrap" aria-label="More stories">
@@ -82,6 +55,50 @@ export default function HomePage() {
               sizes="(min-width: 1040px) 25vw, 50vw"
             />
           ))}
+        </div>
+      </section>
+
+      <section className="wrap section" aria-label="Latest stories and editors' picks">
+        <div className="latest2">
+          <div className="latest2__main">
+            <StreamTabs
+              tabs={[
+                {
+                  id: "stream-latest",
+                  label: "Latest",
+                  panel: (
+                    <div className="rows">
+                      {home.latest.map((article) => (
+                        <StoryRow key={article.slug} card={toCard(article)} />
+                      ))}
+                      <LoadMore
+                        shown={home.latest.map((a) => a.slug)}
+                        exclude={home.leadSlugs}
+                        batch={4}
+                        total={streamTotal}
+                        href="/latest"
+                      />
+                    </div>
+                  ),
+                },
+                {
+                  id: "stream-picks",
+                  label: "Editors' Picks",
+                  panel: (
+                    <div className="rows">
+                      {home.picks.map((article) => (
+                        <StoryRow key={article.slug} card={toCard(article)} />
+                      ))}
+                    </div>
+                  ),
+                },
+              ]}
+            />
+          </div>
+          <div className="latest2__rail">
+            <PlacesRail />
+            <TopicsRail />
+          </div>
         </div>
       </section>
 
@@ -122,48 +139,6 @@ export default function HomePage() {
               </li>
             ))}
           </ol>
-        </div>
-      </section>
-
-      <section className="wrap section" aria-labelledby="latest-title">
-        <div className="latest2">
-          <div className="latest2__main">
-            <div className="section-head">
-              <h2 id="latest-title" className="section-title">
-                Latest
-              </h2>
-              <Link href="/latest" className="text-link">
-                All stories
-              </Link>
-            </div>
-            <div className="rows">
-              {home.latest.map((article) => (
-                <StoryRow key={article.slug} card={toCard(article)} />
-              ))}
-              <LoadMore
-                shown={home.latest.map((a) => a.slug)}
-                exclude={home.leadSlugs}
-                batch={4}
-                total={streamTotal}
-                href="/latest"
-              />
-            </div>
-          </div>
-          <aside className="latest2__rail" aria-labelledby="topics-title">
-            <h2 id="topics-title" className="section-title section-title--rail">
-              Topics
-            </h2>
-            <ul>
-              {topics.map((topic) => (
-                <li key={topic.slug}>
-                  <Link href={`/tag/${tagSlug(topic.label)}`} className="topic-row">
-                    <span className="u">{topic.label}</span>
-                    <span className="meta">{topic.count}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </aside>
         </div>
       </section>
 

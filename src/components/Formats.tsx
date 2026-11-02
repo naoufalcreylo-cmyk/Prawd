@@ -229,6 +229,57 @@ export function PerspectivesModule({
   );
 }
 
+/** The homepage's two lists. Both are in the page, so without JavaScript they simply follow each other. */
+export function StreamTabs({ tabs }: { tabs: { id: string; label: string; panel: ReactNode }[] }) {
+  const [active, setActive] = useState(0);
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function select(index: number, focus = false) {
+    setActive(index);
+    if (focus) refs.current[index]?.focus();
+  }
+
+  return (
+    <>
+      <div className="stream-tabs" role="tablist" aria-label="Choose a list">
+        {tabs.map((tab, i) => (
+          <button
+            key={tab.id}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="tab"
+            id={`${tab.id}-tab`}
+            aria-selected={i === active}
+            aria-controls={tab.id}
+            tabIndex={i === active ? 0 : -1}
+            onClick={() => select(i)}
+            onKeyDown={(event) => tabKeys(event, i, tabs.length, (n) => select(n, true))}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <noscript>
+        <style>{`.stream-panel[hidden]{display:block!important}`}</style>
+      </noscript>
+      {tabs.map((tab, i) => (
+        <div
+          key={tab.id}
+          id={tab.id}
+          role="tabpanel"
+          aria-labelledby={`${tab.id}-tab`}
+          hidden={i !== active}
+          className="stream-panel"
+        >
+          {tab.panel}
+        </div>
+      ))}
+    </>
+  );
+}
+
 /** Sticky chapter navigation for The Matchday Edit. Highlights the chapter being read. */
 export function ChapterRail({ chapters }: { chapters: { id: string; label: string }[] }) {
   const [active, setActive] = useState(chapters[0].id);

@@ -185,8 +185,21 @@ function StoryImage({ item, ratio, sizes, priority }: { item: MediaItem; ratio: 
   );
 }
 
-function KeepReading({ article }: { article: Article }) {
-  const [next, ...others] = getRelated(article, 4);
+function UpNext({ article }: { article: Article }) {
+  return (
+    <aside className="up-next" aria-labelledby="up-next-title">
+      <h2 id="up-next-title" className="section-title section-title--rail">
+        Up next
+      </h2>
+      {getRelated(article, 3).map((item) => (
+        <StoryCard key={item.slug} card={toCard(item)} className="story-row story-row--small" sizes="96px" />
+      ))}
+    </aside>
+  );
+}
+
+function KeepReading({ article, skip = 0 }: { article: Article; skip?: number }) {
+  const [next, ...others] = getRelated(article, 4 + skip).slice(skip);
   if (!next) return null;
   const card = toCard(next);
   return (
@@ -322,37 +335,44 @@ export default async function ArticlePage({ params }: Props) {
       ) : (
         <>
           {isPhoto ? (
-            <>
-              <figure>
-                <StoryImage item={article.image} ratio="photo-lead" sizes="100vw" priority />
-                <div className="wrap">
-                  <Caption item={article.image} />
-                </div>
-              </figure>
-              <ArticleHead article={article} />
-            </>
-          ) : (
-            <>
-              <ArticleHead article={article} />
-              <figure className="wrap article__lead">
-                <StoryImage item={article.image} ratio="r-wide" sizes="(min-width: 1760px) 1680px, 100vw" priority />
+            <figure>
+              <StoryImage item={article.image} ratio="photo-lead" sizes="100vw" priority />
+              <div className="wrap">
                 <Caption item={article.image} />
-              </figure>
-            </>
-          )}
-          <div className="wrap article__body-wrap">
-            <div className={isPhoto ? "article__single" : "article__columns"}>
-              <div className="prose" data-article-body>
-                <DemoNotice article={article} />
-                <ArticleBody source={article.body} />
               </div>
-              <ArticleRail article={article} url={url} />
-            </div>
+            </figure>
+          ) : null}
+          <ArticleHead article={article} />
+          <div className="wrap article__body-wrap">
+            {isPhoto ? (
+              <div className="article__single">
+                <div className="prose" data-article-body>
+                  <DemoNotice article={article} />
+                  <ArticleBody source={article.body} />
+                </div>
+                <ArticleRail article={article} url={url} />
+              </div>
+            ) : (
+              <div className="article__columns">
+                <div className="article__center">
+                  <figure className="article__lead-figure">
+                    <StoryImage item={article.image} ratio="r-wide" sizes="(min-width: 1040px) 60vw, 100vw" priority />
+                    <Caption item={article.image} />
+                  </figure>
+                  <div className="prose" data-article-body>
+                    <DemoNotice article={article} />
+                    <ArticleBody source={article.body} />
+                  </div>
+                </div>
+                <ArticleRail article={article} url={url} />
+                <UpNext article={article} />
+              </div>
+            )}
           </div>
         </>
       )}
 
-      <KeepReading article={article} />
+      <KeepReading article={article} skip={article.layout === "standard" ? 3 : 0} />
     </article>
   );
 }

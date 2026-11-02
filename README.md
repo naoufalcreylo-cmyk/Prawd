@@ -61,12 +61,12 @@ Write Markdown, plus four components:
 <Q>A question in an interview.</Q>
 ```
 
-The homepage arranges itself from the frontmatter. Only the text list "In this edition" repeats stories placed further down:
+The homepage arranges itself from the frontmatter. Only the Editors' Picks tab, which lists `featured` stories, repeats stories placed elsewhere:
 
-- **Lead stories:** one `lead` and two `supporting`.
+- **Lead stories:** one `lead` and one `supporting`.
 - **Four-up row:** four stories with `row`.
 - **The Matchday Edit and PRAWD Perspectives:** the newest story with that `layout`.
-- **Latest:** the newest four stories not placed elsewhere. "Load more" then adds the rest.
+- **Latest:** the newest five stories not placed elsewhere. "Load more" then adds the rest.
 - **PRAWD Selects:** three stories with `selects`.
 - **In Focus:** one story with `in-focus`. Use a wide photograph, as it's cropped to a panorama.
 - **Kits & Boots and Voices:** the newest unplaced stories from `kits-boots` and `interviews`.

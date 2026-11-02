@@ -30,16 +30,28 @@ function NavList({ pathname, label }: { pathname: string; label: string }) {
   );
 }
 
-function Tools({ onMenu, onSearch }: { onMenu: () => void; onSearch: () => void }) {
+function SearchIcon() {
   return (
-    <div className="tools">
-      <button type="button" className="tool tool--menu" onClick={onMenu} aria-haspopup="dialog">
-        Menu
-      </button>
-      <button type="button" className="tool" onClick={onSearch} aria-haspopup="dialog">
-        Search
-      </button>
-    </div>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <circle cx="8.5" cy="8.5" r="5.75" />
+      <path d="M12.75 12.75 18 18" />
+    </svg>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg width="22" height="20" viewBox="0 0 22 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+      <path d="M1 4.5h20M1 10h20M1 15.5h20" />
+    </svg>
+  );
+}
+
+function IconButton({ label, onClick, className = "" }: { label: "Menu" | "Search"; onClick: () => void; className?: string }) {
+  return (
+    <button type="button" className={`icon-button ${className}`} onClick={onClick} aria-label={label} aria-haspopup="dialog">
+      {label === "Menu" ? <MenuIcon /> : <SearchIcon />}
+    </button>
   );
 }
 
@@ -233,60 +245,98 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
 export function SiteHeader() {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const [pastMasthead, setPastMasthead] = useState(false);
+  const [pastHeader, setPastHeader] = useState(false);
   const [panel, setPanel] = useState<"menu" | "search" | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
 
   const close = () => setPanel(null);
+  const openMenu = () => setPanel("menu");
+  const openSearch = () => setPanel("search");
 
   useEffect(() => {
     document.documentElement.classList.toggle("is-locked", panel !== null);
   }, [panel]);
 
   useEffect(() => {
-    if (!isHome || !sentinel.current) return;
+    if (!sentinel.current) return;
     const observer = new IntersectionObserver(([entry]) => {
-      setPastMasthead(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      setPastHeader(!entry.isIntersecting && entry.boundingClientRect.top < 0);
     });
     observer.observe(sentinel.current);
     return () => observer.disconnect();
-  }, [isHome]);
+  }, []);
+
+  const logo = (
+    <Link href="/" aria-label="PRAWD home" className="hx-logo__link">
+      <Wordmark decorative />
+    </Link>
+  );
 
   return (
     <>
-      {isHome ? (
-        <header>
-          <div className="wrap masthead">
-            <h1 className="masthead__mark">
-              <Link href="/" aria-label="PRAWD home" tabIndex={-1} style={{ display: "block" }}>
-                <Wordmark decorative />
-              </Link>
-            </h1>
-            <div className="masthead__tools">
-              <Tools onMenu={() => setPanel("menu")} onSearch={() => setPanel("search")} />
-            </div>
-            <div className="masthead__line">
+      <header className="hx">
+        <div className="hx-top">
+          <div className="wrap hx-top__inner">
+            <Link
+              href="/search"
+              className="hx-search"
+              aria-haspopup="dialog"
+              onClick={(event) => {
+                event.preventDefault();
+                openSearch();
+              }}
+            >
+              <SearchIcon />
+              Search PRAWD
+            </Link>
+            <nav aria-label="PRAWD formats and pages">
+              <ul className="hx-top__links">
+                {FORMATS.map((item) => (
+                  <li key={item.href}>
+                    <Link href={item.href}>{item.label}</Link>
+                  </li>
+                ))}
+                <li>
+                  <Link href="/about">About</Link>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+        <div className="wrap hx-main">
+          <div className="hx-main__left">
+            <IconButton label="Menu" onClick={openMenu} />
+          </div>
+          {isHome ? <h1 className="hx-logo">{logo}</h1> : <div className="hx-logo">{logo}</div>}
+          <div className="hx-main__right">
+            <div className="hx-line">
               <p>{SITE.line}</p>
               <p className="meta">Preview edition. Sample content.</p>
             </div>
+            <IconButton label="Search" onClick={openSearch} className="hx-small-only" />
+            <IconButton label="Menu" onClick={openMenu} className="hx-small-only" />
           </div>
-          <div className="nav-row">
-            <div className="wrap nav-row__inner">
-              <NavList pathname={pathname} label="Main" />
-              <Tools onMenu={() => setPanel("menu")} onSearch={() => setPanel("search")} />
-            </div>
+        </div>
+        <div className="hx-nav">
+          <div className="wrap">
+            <NavList pathname={pathname} label="Main" />
           </div>
-          <div ref={sentinel} aria-hidden="true" />
-        </header>
-      ) : null}
+        </div>
+        <div ref={sentinel} aria-hidden="true" />
+      </header>
 
-      <div className={`bar ${isHome ? `bar--float${pastMasthead ? " is-on" : ""}` : "bar--sticky"}`}>
+      {/* Fixed and out of flow, so appearing causes no layout jump. */}
+      <div className={`bar bar--float${pastHeader ? " is-on" : ""}`}>
         <div className="wrap bar__inner">
+          <IconButton label="Menu" onClick={openMenu} className="hx-wide-only" />
           <Link href="/" className="bar__mark" aria-label="PRAWD home">
             <Wordmark decorative />
           </Link>
-          <NavList pathname={pathname} label={isHome ? "Main, compact" : "Main"} />
-          <Tools onMenu={() => setPanel("menu")} onSearch={() => setPanel("search")} />
+          <NavList pathname={pathname} label="Main, compact" />
+          <div className="bar__tools">
+            <IconButton label="Search" onClick={openSearch} />
+            <IconButton label="Menu" onClick={openMenu} className="hx-small-only" />
+          </div>
         </div>
       </div>
 

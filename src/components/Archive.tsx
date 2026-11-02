@@ -4,6 +4,7 @@ import { CATEGORIES, PAGE_SIZE } from "@/lib/site";
 import type { CategorySlug } from "@/lib/types";
 import { StoryCard, StoryRow } from "./StoryCard";
 import { LoadMore } from "./LoadMore";
+import { PlacesRail, TopicsRail } from "./Rails";
 
 export function Archive({
   title,
@@ -96,26 +97,34 @@ export function Archive({
         </div>
       ) : null}
 
-      <div className="rows">
-        {rows.map((card) => (
-          <StoryRow key={card.slug} card={card} />
-        ))}
-        {page < totalPages && page === 1 ? (
-          <LoadMore
-            shown={items.map((a) => a.slug)}
-            category={category}
-            tag={tag}
-            batch={PAGE_SIZE}
-            total={articles.length}
-            href={hrefFor(page + 1)}
-          />
-        ) : null}
-        {page > 1 ? (
-          <nav className="pagination" aria-label="Pagination">
-            <Link href={hrefFor(page - 1)}>Newer stories</Link>
-            {page < totalPages ? <Link href={hrefFor(page + 1)}>Older stories</Link> : null}
-          </nav>
-        ) : null}
+      <div className="latest2">
+        <div className="latest2__main">
+          <div className="rows">
+            {rows.map((card) => (
+              <StoryRow key={card.slug} card={card} />
+            ))}
+            {page < totalPages && page === 1 ? (
+              <LoadMore
+                shown={items.map((a) => a.slug)}
+                category={category}
+                tag={tag}
+                batch={PAGE_SIZE}
+                total={articles.length}
+                href={hrefFor(page + 1)}
+              />
+            ) : null}
+            {page > 1 ? (
+              <nav className="pagination" aria-label="Pagination">
+                <Link href={hrefFor(page - 1)}>Newer stories</Link>
+                {page < totalPages ? <Link href={hrefFor(page + 1)}>Older stories</Link> : null}
+              </nav>
+            ) : null}
+          </div>
+        </div>
+        <div className="latest2__rail">
+          <PlacesRail />
+          <TopicsRail />
+        </div>
       </div>
     </div>
   );
